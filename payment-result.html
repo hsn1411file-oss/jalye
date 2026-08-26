@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>نتيجة الدفع | جلي</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <div class="wrap nav">
+    <a class="brand" href="index.html">جلي | Jalye</a>
+    <a href="index.html">الرئيسية</a>
+  </div>
+</header>
+
+<main>
+  <section>
+    <div class="wrap legal">
+      <div class="card">
+        <h1 id="title">جاري التحقق من العملية</h1>
+        <p id="message" class="muted">
+          لا تغلق الصفحة حتى تظهر النتيجة.
+        </p>
+        <p class="notice">
+          تفعيل الاشتراك يعتمد على تحقق الخادم من العملية، وليس على هذه الصفحة وحدها.
+        </p>
+        <a class="btn" href="index.html">العودة للرئيسية</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const status = (params.get("status") || "").toLowerCase();
+  const id = params.get("id") || "";
+
+  const title = document.getElementById("title");
+  const message = document.getElementById("message");
+
+  if (status === "paid") {
+    title.textContent = "تم استلام عملية الدفع";
+    message.textContent =
+      "جاري اعتماد العملية من ميسر وتسجيلها في حسابك. قد يستغرق ذلك لحظات.";
+  } else if (status === "failed") {
+    title.textContent = "لم تكتمل عملية الدفع";
+    message.textContent =
+      "لم يتم اعتماد أي اشتراك. يمكنك العودة والمحاولة مرة أخرى.";
+  } else {
+    title.textContent = "تمت العودة من صفحة الدفع";
+    message.textContent =
+      "سيتم الاعتماد فقط إذا أكد ميسر للخادم أن العملية مدفوعة بنجاح.";
+  }
+
+  // لا نعرض Payment ID للمستخدم، لكنه يبقى في عنوان الصفحة لدعم التتبع عند الحاجة.
+</script>
+</body>
+</html>

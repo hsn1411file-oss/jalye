@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>الدفع | جلي</title>
+
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://cdn.moyasar.com/mpf/1.7.3/moyasar.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.moyasar.com/mpf/1.7.3/moyasar.js"></script>
+
+  <style>
+    .checkout-wrap{max-width:720px;margin:40px auto;padding:0 18px}
+    .box{background:#0d1b2a;border:1px solid #203247;border-radius:16px;padding:24px;margin-bottom:18px}
+    .field{width:100%;padding:12px;border-radius:10px;border:1px solid #33475c;margin:7px 0;background:#07111f;color:#fff}
+    .plan{display:block;width:100%;text-align:right;margin:10px 0;padding:16px;border:1px solid #33475c;border-radius:12px;background:#102135;color:#fff;cursor:pointer}
+    .plan:hover{border-color:#38bdf8}
+    .hidden{display:none}
+    #msg{margin-top:12px;color:#b8c5d1}
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="wrap nav">
+    <a class="brand" href="index.html">جلي | Jalye</a>
+    <a href="index.html">الرئيسية</a>
+  </div>
+</header>
+
+<main class="checkout-wrap">
+  <div class="box">
+    <h1>الاشتراك في جلي</h1>
+    <p class="muted">سجّل الدخول أولًا، ثم اختر الباقة المناسبة.</p>
+  </div>
+
+  <div id="loginBox" class="box">
+    <h2>تسجيل الدخول</h2>
+    <input id="email" class="field" type="email" placeholder="البريد الإلكتروني" autocomplete="email">
+    <input id="password" class="field" type="password" placeholder="كلمة المرور" autocomplete="current-password">
+    <button id="loginBtn" class="btn" type="button">دخول</button>
+    <div id="loginMsg"></div>
+  </div>
+
+  <div id="plansBox" class="box hidden">
+    <h2>اختر الباقة</h2>
+
+    <button class="plan" data-plan="term_1" data-amount="1700">
+      <strong>ترم واحد — 17 ريال</strong><br>
+      <span class="muted">اشتراك لمدة فصل دراسي واحد</span>
+    </button>
+
+    <button class="plan" data-plan="terms_2" data-amount="2800">
+      <strong>ترمين — 28 ريال</strong><br>
+      <span class="muted">اشتراك لفصلين دراسيين</span>
+    </button>
+  </div>
+
+  <div id="paymentBox" class="box hidden">
+    <h2 id="selectedPlanTitle">الدفع</h2>
+    <div class="mysr-form"></div>
+    <div id="msg"></div>
+  </div>
+</main>
+
+<script>
+  // =========================================================
+  // ضع القيم الثلاث هنا فقط
+  // =========================================================
+  const SUPABASE_URL = "https://kypgnzpqgehrdaoblmpp.supabase.co/functions/v1/moyasar-webhook";
+  const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_inCuUOMEdNeXHHHnl6mYwQ_C7h4jSug";
+  const MOYASAR_PUBLISHABLE_TEST_KEY = "pk_test_TtigqXQY2Mbromm27cnX4cXBKJXrYsbYrwvvfHyg";
+  // =========================================================
+
+  const sb = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_PUBLISHABLE_KEY,
+    {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: false
+      }
+    }
+  );
+
+  const loginBox = document.getElementById("loginBox");
+  const plansBox = document.getElementById("plansBox");
+  const paymentBox = document.getElementById("paymentBox");
+  const loginMsg = document.getElementById("loginMsg");
+
+  let currentUser = null;
+  let paymentStarted = false;
+
+  function safeMessage(text) {
+    loginMsg.textContent = text || "";
+  }
+
+  async function showLoggedIn(user) {
+    currentUser = user;
+    loginBox.classList.add("hidden");
+    plansBox.classList.remove("hidden");
+  }
+
+  async function checkExistingSession() {
+    const { data } = await sb.auth.getSession();
+    if (data?.session?.user) {
+      await showLoggedIn(data.session.user);
+    }
+  }
+
+  document.getElementById("loginBtn").addEventListener("click", async () => {
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+
+    if (!email || !password) {
+      safeMessage("اكتب البريد الإلكتروني وكلمة المرور.");
+      return;
+    }
+
+    safeMessage("جاري تسجيل الدخول...");
+
+    const { data, error } = await sb.auth.signInWithPassword({
+      email,
+      password
+    });
+
+    if (error || !data?.user) {
+      safeMessage("تعذر تسجيل الدخول. تأكد من البريد وكلمة المرور.");
+      return;
+    }
+
+    safeMessage("");
+    await showLoggedIn(data.user);
+  });
+
+  document.querySelectorAll(".plan").forEach((button) => {
+    button.addEventListener("click", () => {
+      if (!currentUser || paymentStarted) return;
+
+      const planCode = button.dataset.plan;
+      const amount = Number(button.dataset.amount);
+
+      if (!["term_1", "terms_2"].includes(planCode)) return;
+      if (![1700, 2800].includes(amount)) return;
+
+      paymentStarted = true;
+      plansBox.classList.add("hidden");
+      paymentBox.classList.remove("hidden");
+
+      document.getElementById("selectedPlanTitle").textContent =
+        planCode === "term_1"
+          ? "ترم واحد — 17 ريال"
+          : "ترمين — 28 ريال";
+
+      const callbackUrl =
+        new URL("payment-result.html", window.location.href).href;
+
+      window.Moyasar.init({
+        element: ".mysr-form",
+        amount: amount,
+        currency: "SAR",
+        description:
+          planCode === "term_1"
+            ? "Jalye - Term 1"
+            : "Jalye - Terms 2",
+        publishable_api_key: MOYASAR_PUBLISHABLE_TEST_KEY,
+        callback_url: callbackUrl,
+        supported_networks: ["mada", "visa", "mastercard"],
+        methods: ["creditcard"],
+        fixed_width: false,
+
+        metadata: {
+          user_id: currentUser.id,
+          plan_code: planCode
+        },
+
+        on_failure: function() {
+          document.getElementById("msg").textContent =
+            "تعذر بدء عملية الدفع. حاول مرة أخرى.";
+        }
+      });
+    });
+  });
+
+  checkExistingSession();
+</script>
+</body>
+</html>
