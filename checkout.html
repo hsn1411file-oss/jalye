@@ -127,9 +127,16 @@
     });
 
     if (error || !data?.user) {
-      safeMessage("تعذر تسجيل الدخول. تأكد من البريد وكلمة المرور.");
-      return;
-    }
+  console.error("Supabase login error:", error);
+
+  safeMessage(
+    error?.message
+      ? "خطأ تسجيل الدخول: " + error.message
+      : "تعذر تسجيل الدخول."
+  );
+
+  return;
+}
 
     safeMessage("");
     await showLoggedIn(data.user);
