@@ -53,7 +53,20 @@
       "سيتم الاعتماد فقط إذا أكد ميسر للخادم أن العملية مدفوعة بنجاح.";
   }
 
-  // لا نعرض Payment ID للمستخدم، لكنه يبقى في عنوان الصفحة لدعم التتبع عند الحاجة.
+  // بعد العودة من ميسر ننظف عنوان الصفحة ونمنع الرجوع إلى نموذج الدفع القديم.
+  // بيانات الدفع الحساسة/المعرفات لا تبقى ظاهرة في شريط العنوان.
+  if (status === "paid") {
+    const cleanUrl = new URL(window.location.href);
+    cleanUrl.search = "";
+    cleanUrl.hash = "";
+
+    history.replaceState({ jalyePaymentComplete: true }, "", cleanUrl.href);
+    history.pushState({ jalyePaymentComplete: true }, "", cleanUrl.href);
+
+    window.addEventListener("popstate", () => {
+      history.go(1);
+    });
+  }
 </script>
 </body>
 </html>
