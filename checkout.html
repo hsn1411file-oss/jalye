@@ -32,14 +32,27 @@
 <main class="checkout-wrap">
   <div class="box">
     <h1>الاشتراك في جلي</h1>
-    <p class="muted">سجّل الدخول أولًا، ثم اختر الباقة المناسبة.</p>
+    <p class="muted">أنشئ حسابًا جديدًا أو سجّل الدخول، ثم اختر الباقة المناسبة.</p>
   </div>
 
   <div id="loginBox" class="box">
-    <h2>تسجيل الدخول</h2>
-    <input id="email" class="field" type="email" placeholder="البريد الإلكتروني" autocomplete="email">
-    <input id="password" class="field" type="password" placeholder="كلمة المرور" autocomplete="current-password">
-    <button id="loginBtn" class="btn" type="button">دخول</button>
+    <div id="signInView">
+      <h2>تسجيل الدخول</h2>
+      <input id="email" class="field" type="email" placeholder="البريد الإلكتروني" autocomplete="email">
+      <input id="password" class="field" type="password" placeholder="كلمة المرور" autocomplete="current-password">
+      <button id="loginBtn" class="btn" type="button">دخول</button>
+      <p class="muted">ليس لديك حساب؟ <button id="showSignUpBtn" type="button">إنشاء حساب جديد</button></p>
+    </div>
+
+    <div id="signUpView" class="hidden">
+      <h2>إنشاء حساب</h2>
+      <input id="newEmail" class="field" type="email" placeholder="البريد الإلكتروني" autocomplete="email">
+      <input id="confirmEmail" class="field" type="email" placeholder="تأكيد البريد الإلكتروني" autocomplete="email">
+      <input id="newPassword" class="field" type="password" placeholder="كلمة المرور" autocomplete="new-password">
+      <button id="signUpBtn" class="btn" type="button">إنشاء الحساب</button>
+      <p class="muted">لديك حساب؟ <button id="showSignInBtn" type="button">تسجيل الدخول</button></p>
+    </div>
+
     <div id="loginMsg"></div>
   </div>
 
@@ -68,9 +81,9 @@
   // =========================================================
   // ضع القيم الثلاث هنا فقط
   // =========================================================
-  const SUPABASE_URL = "https://kypgnzpqgehrdaoblmpp.supabase.co";
-  const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_inCuUOMEdNeXHHHnl6mYwQ_C7h4jSug";
-  const MOYASAR_PUBLISHABLE_TEST_KEY = "pk_test_TtigqXQY2Mbromm27cnX4cXBKJXrYsbYrwvvfHyg";
+  const SUPABASE_URL = "YOUR_SUPABASE_URL";
+  const SUPABASE_PUBLISHABLE_KEY = "YOUR_SUPABASE_PUBLISHABLE_KEY";
+  const MOYASAR_PUBLISHABLE_TEST_KEY = "YOUR_MOYASAR_PK_TEST";
   // =========================================================
 
   const sb = window.supabase.createClient(
@@ -110,6 +123,60 @@
     }
   }
 
+  const signInView = document.getElementById("signInView");
+  const signUpView = document.getElementById("signUpView");
+
+  document.getElementById("showSignUpBtn").addEventListener("click", () => {
+    safeMessage("");
+    signInView.classList.add("hidden");
+    signUpView.classList.remove("hidden");
+  });
+
+  document.getElementById("showSignInBtn").addEventListener("click", () => {
+    safeMessage("");
+    signUpView.classList.add("hidden");
+    signInView.classList.remove("hidden");
+  });
+
+  document.getElementById("signUpBtn").addEventListener("click", async () => {
+    const email = document.getElementById("newEmail").value.trim();
+    const confirmEmail = document.getElementById("confirmEmail").value.trim();
+    const password = document.getElementById("newPassword").value;
+
+    if (!email || !confirmEmail || !password) {
+      safeMessage("أكمل البريد الإلكتروني وتأكيده وكلمة المرور.");
+      return;
+    }
+
+    if (email.toLowerCase() !== confirmEmail.toLowerCase()) {
+      safeMessage("البريد الإلكتروني غير متطابق.");
+      return;
+    }
+
+    safeMessage("جاري إنشاء الحساب...");
+
+    const { data, error } = await sb.auth.signUp({
+      email,
+      password
+    });
+
+    if (error || !data?.user) {
+      safeMessage("تعذر إنشاء الحساب. تأكد من البيانات أو جرّب تسجيل الدخول إذا كان الحساب موجودًا.");
+      return;
+    }
+
+    if (data.session?.user) {
+      safeMessage("");
+      await showLoggedIn(data.session.user);
+      return;
+    }
+
+    safeMessage("تم إنشاء الحساب. سجّل الدخول للمتابعة.");
+    signUpView.classList.add("hidden");
+    signInView.classList.remove("hidden");
+    document.getElementById("email").value = email;
+  });
+
   document.getElementById("loginBtn").addEventListener("click", async () => {
     const email = document.getElementById("email").value.trim();
     const password = document.getElementById("password").value;
@@ -127,16 +194,9 @@
     });
 
     if (error || !data?.user) {
-  console.error("Supabase login error:", error);
-
-  safeMessage(
-    error?.message
-      ? "خطأ تسجيل الدخول: " + error.message
-      : "تعذر تسجيل الدخول."
-  );
-
-  return;
-}
+      safeMessage("تعذر تسجيل الدخول. تأكد من البريد وكلمة المرور.");
+      return;
+    }
 
     safeMessage("");
     await showLoggedIn(data.user);
