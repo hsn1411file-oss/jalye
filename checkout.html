@@ -224,30 +224,42 @@
       const callbackUrl =
         new URL("payment-result.html", window.location.href).href;
 
-      window.Moyasar.init({
-        element: ".mysr-form",
-        amount: amount,
-        currency: "SAR",
-        description:
-          planCode === "term_1"
-            ? "Jalye - Term 1"
-            : "Jalye - Terms 2",
-        publishable_api_key: MOYASAR_PUBLISHABLE_TEST_KEY,
-        callback_url: callbackUrl,
-        supported_networks: ["mada", "visa", "mastercard"],
-        methods: ["creditcard", "applepay"],
-        fixed_width: false,
+window.Moyasar.init({
+  element: ".mysr-form",
+  amount: amount,
+  currency: "SAR",
 
-        metadata: {
-          user_id: currentUser.id,
-          plan_code: planCode
-        },
+  description:
+    planCode === "term_1"
+      ? "Jalye - Term 1"
+      : "Jalye - Terms 2",
 
-        on_failure: function() {
-          document.getElementById("msg").textContent =
-            "تعذر بدء عملية الدفع. حاول مرة أخرى.";
-        }
-      });
+  publishable_api_key: MOYASAR_PUBLISHABLE_TEST_KEY,
+  callback_url: callbackUrl,
+
+  supported_networks: ["mada", "visa", "mastercard"],
+
+  methods: ["creditcard", "applepay"],
+
+  apple_pay: {
+    country: "SA",
+    label: "Jalye",
+    validate_merchant_url:
+      "https://api.moyasar.com/v1/applepay/initiate"
+  },
+
+  fixed_width: false,
+
+  metadata: {
+    user_id: currentUser.id,
+    plan_code: planCode
+  },
+
+  on_failure: function() {
+    document.getElementById("msg").textContent =
+      "تعذر بدء عملية الدفع. حاول مرة أخرى.";
+  }
+});
     });
   });
 
