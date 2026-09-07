@@ -239,7 +239,7 @@ window.Moyasar.init({
 
   supported_networks: ["mada", "visa", "mastercard"],
 
-  methods: ["creditcard", "applepay"],
+  methods: ["creditcard", "applepay", "samsungpay"],
 
   apple_pay: {
     country: "SA",
@@ -247,7 +247,13 @@ window.Moyasar.init({
     validate_merchant_url:
       "https://api.moyasar.com/v1/applepay/initiate"
   },
-
+samsung_pay: {
+  service_id: "b02a223467db42af8b2fcc",
+  order_number: "JALYE-" + Date.now(),
+  country: "SA",
+  label: "Jalye",
+  environment: "STAGE"
+},
   fixed_width: false,
 
   metadata: {
